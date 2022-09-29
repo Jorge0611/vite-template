@@ -34,7 +34,7 @@ const protectedRoutes: RouteObject[] = [
           },
           {
             path: "/login",
-            element: <h1>Login</h1>,
+            element: <h1>Login on the website</h1>,
           },
           {
             path: "/register",
