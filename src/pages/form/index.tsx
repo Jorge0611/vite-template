@@ -1,49 +1,89 @@
-import { FC, useRef } from "react";
+import { Checkboxes } from "@/components/form/ControlledCheckbox";
+import { ControlledInput } from "@/components/form/ControlledInput";
+import { FC, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { parseActions, parseRule } from "@/utils/rules";
+import type { Rules } from "@/utils/rules";
 
-interface _FormGroupProps {
-  label: string;
-  id: string;
-  type?: "text" | "email" | "tel" | "textarea";
-  children?: JSX.Element;
-}
-
-const FormGroup = ({
-  id,
-  label,
-  children,
-}: _FormGroupProps): ReturnType<FC> => {
-  return (
-    <div className="flex flex-col">
-      <label className="label" htmlFor={id}>
-        {label}
-      </label>
-      {children || (
-        <input
-          className="input w-full"
-          type="text"
-          name={id}
-          id={id}
-          pattern={`[a-zA-Z]{3,}`}
-        />
-      )}
-    </div>
-  );
-};
+const rules: Rules[] = [
+  {
+    conditions: [
+      {
+        field: "firstName",
+        operator: "in",
+        value: "admin",
+      },
+      {
+        field: "email",
+        operator: "eq",
+        value: "admin",
+      },
+    ],
+    actions: [
+      {
+        type: "hide",
+        field: "email",
+      },
+      {
+        type: "hide",
+        field: "phone",
+      },
+    ],
+    counter: [
+      {
+        type: "show",
+        field: "email",
+      },
+      {
+        type: "show",
+        field: "phone",
+      },
+    ],
+  },
+  {
+    conditions: [
+      {
+        field: "option",
+        operator: "in",
+        value: "a",
+      },
+      {
+        field: "option",
+        operator: "nin",
+        value: "b",
+      },
+    ],
+    actions: [
+      {
+        type: "required",
+        field: "email",
+      },
+      {
+        type: "hide",
+        field: "phone",
+      },
+    ],
+  },
+];
 
 export default function Form(): ReturnType<FC> {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const elements = e.currentTarget.elements;
-    const mapped = Array.prototype.map.call(elements, (ele) => {
-      if (ele.name) {
-        return {
-          [ele.name]: ele.value,
-        };
-      }
+  const { handleSubmit, control, watch } = useForm();
+
+  const onSubmit = (data: Object) => {
+    alert(JSON.stringify(data));
+  };
+
+  useEffect(() => {
+    const subscription = watch((value) => {
+      rules.forEach((rule) => {
+        parseActions(parseRule(rule, value));
+      });
+
+      console.log(value);
     });
 
-    console.log(mapped);
-  };
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   return (
     <div className="flex h-screen flex-col items-center justify-center">
@@ -51,19 +91,38 @@ export default function Form(): ReturnType<FC> {
         <h1 className="font-bold">Formulary</h1>
       </header>
       <main className="mt-8 flex flex-col items-center justify-center">
-        <form onSubmit={handleSubmit} className="flex flex-col space-y-2">
-          <FormGroup id="name" label="Name" />
-          <FormGroup label="Email" id="email" />
-          <FormGroup label="Phone" id="phone" />
-          <FormGroup label="Message" id="message">
-            <textarea
-              className="input w-full"
-              name="message"
-              id="message"
-              cols={30}
-              rows={2}
-            />
-          </FormGroup>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col space-y-2"
+        >
+          <Checkboxes name="option" options={["a", "b"]} control={control} />
+
+          <ControlledInput
+            label="First Name"
+            name="firstName"
+            control={control}
+          />
+
+          <ControlledInput
+            label="Last Name"
+            name="lastName"
+            control={control}
+          />
+
+          <ControlledInput
+            id="email"
+            label="Email"
+            name="email"
+            control={control}
+          />
+
+          <ControlledInput
+            id="phone"
+            label="Phone"
+            name="phone"
+            control={control}
+          />
+
           <button
             type="submit"
             className="w-full bg-blue-600 py-2 px-4 font-semibold text-white hover:bg-blue-800 hover:transition-transform active:-translate-y-[2px]"
